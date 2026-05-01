@@ -1,0 +1,15 @@
+# User images
+input/*
+!input/.gitkeep
+output/*
+!output/.gitkeep
+!output/story/
+output/story/*
+!output/story/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
