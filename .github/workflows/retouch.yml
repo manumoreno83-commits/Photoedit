@@ -1,0 +1,82 @@
+name: Retouch photos
+
+on:
+  push:
+    paths:
+      - 'photo-retoucher/input/**'
+      - '!photo-retoucher/input/.gitkeep'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Editing profile'
+        required: false
+        default: 'auto'
+        type: choice
+        options: [auto, sea, travel, people, indoor, default]
+      strength:
+        description: 'Strength'
+        required: false
+        default: 'low'
+        type: choice
+        options: [low, medium]
+      story:
+        description: 'Generate 9:16 Story crop'
+        required: false
+        default: 'true'
+        type: choice
+        options: ['true', 'false']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: retouch
+  cancel-in-progress: false
+
+jobs:
+  retouch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: photo-retoucher/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r photo-retoucher/requirements.txt
+
+      - name: Check for input photos
+        id: check
+        run: |
+          cd photo-retoucher
+          count=$(ls input/ 2>/dev/null | grep -iE '\.(jpe?g|png|tiff?|webp)$' | wc -l)
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "Found $count input image(s)"
+
+      - name: Run retoucher
+        if: steps.check.outputs.count != '0'
+        run: |
+          cd photo-retoucher
+          python src/main.py \
+            --profile "${{ github.event.inputs.profile || 'auto' }}" \
+            --strength "${{ github.event.inputs.strength || 'low' }}" \
+            --story "${{ github.event.inputs.story || 'true' }}"
+
+      - name: Commit edited outputs
+        if: steps.check.outputs.count != '0'
+        run: |
+          cd photo-retoucher
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f output/
+          if git diff --cached --quiet; then
+            echo "No output changes to commit"
+          else
+            git commit -m "Auto-retouch outputs [skip ci]"
+            git push
+          fi

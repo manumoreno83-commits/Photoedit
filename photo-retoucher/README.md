@@ -72,6 +72,39 @@ python src/main.py
    - `output/<name>_edited.jpg` — full-size retouched image.
    - `output/story/<name>_story.jpg` — 9:16 Story crop (when enabled).
 
+## Phone-only mode (no computer needed)
+
+This repo ships with a GitHub Actions workflow at `.github/workflows/retouch.yml`
+that runs the tool on GitHub's free servers. You upload a photo from your
+phone, a server processes it, and the edited photo appears back in the repo
+for you to download.
+
+**One-time setup**
+
+1. The workflow is already in this repo — nothing to install.
+2. Open the repo in your phone browser at `github.com/<you>/<repo>`.
+3. Tap **Actions** → if prompted, tap **I understand my workflows, enable them**.
+4. Tap **Settings** → **Actions** → **General** → under
+   *Workflow permissions* select **Read and write permissions** → **Save**.
+   (This lets the workflow commit edited photos back.)
+
+**Each time you edit a photo**
+
+1. Open `github.com/<you>/<repo>` in your phone browser (Safari or Chrome —
+   not the GitHub mobile app, it can't upload binaries).
+2. Navigate to `photo-retoucher/input/`.
+3. Tap **Add file** → **Upload files** → pick from your photo library →
+   scroll down → **Commit changes**.
+4. Wait ~1–2 minutes. Tap **Actions** to watch progress if you want.
+5. Refresh `photo-retoucher/output/` — your edited photo is there.
+   `photo-retoucher/output/story/` has the 9:16 version.
+6. Tap the file → **Download** to save back to your phone gallery.
+
+**Manual run with custom settings**
+
+From the phone, go to **Actions** → **Retouch photos** → **Run workflow**.
+You can pick profile / strength / story from a dropdown without re-uploading.
+
 ## CLI options
 
 ```
