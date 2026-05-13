@@ -96,20 +96,76 @@ pnpm dev         # http://localhost:5173
 supabase login
 supabase link --project-ref <your-ref>
 
-# Push schema + seed
+# Push schema + seed (includes Odoo migration 0004)
 supabase db push
 
-# Set the Claude API key as a Function secret (NEVER expose as VITE_)
+# Set secrets (NEVER expose any of these via VITE_)
 supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+supabase secrets set ODOO_URL=https://pro-expo.odoo.com
+supabase secrets set ODOO_DB=pro-expo
+supabase secrets set ODOO_LOGIN=ops@pro-expo.net
+supabase secrets set ODOO_API_KEY=...   # rotate any key that touched chat/email
 
-# Deploy the 6 edge functions
+# Deploy the 6 agent functions + Odoo sync
 supabase functions deploy agent-procurement
 supabase functions deploy agent-technical-brief
 supabase functions deploy agent-quick-costing
 supabase functions deploy agent-quality-gate
 supabase functions deploy agent-ce-reconciliation
 supabase functions deploy agent-ops-orchestrator
+supabase functions deploy sync-odoo
 ```
+
+## Odoo integration
+
+XML-RPC connector against `pro-expo.odoo.com` (Odoo 16). The Edge Function
+`sync-odoo` pulls these models into local tables:
+
+| Odoo model | Local table | Direction |
+|---|---|---|
+| `res.partner` (customer_rank > 0) | `clients` | Odoo → local |
+| `res.partner` (supplier_rank > 0) | `suppliers` | Odoo → local |
+| `project.project` | `projects` | Odoo → local |
+| `sale.order` | `odoo_quotations` (cache) | Odoo → local |
+
+Linkage columns: every synced row carries `odoo_id` (unique), `odoo_model`,
+`odoo_synced_at` and a `raw` JSONB of the full Odoo payload.
+
+### Trigger a sync
+
+```bash
+# One-shot, manual
+supabase functions invoke sync-odoo
+
+# Or, scheduled every 10 min via pg_cron + pg_net
+select cron.schedule(
+  'sync-odoo-every-10min',
+  '*/10 * * * *',
+  $$ select net.http_post(
+       url := '<project>.supabase.co/functions/v1/sync-odoo',
+       headers := jsonb_build_object('authorization', 'Bearer ' || current_setting('app.svc_role'))
+     ) $$
+);
+```
+
+### Inspect the last run
+
+```sql
+select * from odoo_last_sync;
+-- or
+select * from odoo_sync_log order by started_at desc limit 5;
+```
+
+### Notes
+
+- The Odoo API key is read only from Supabase Function secrets. It is never
+  shipped in the bundle and never logged.
+- Stage mapping (Odoo Kanban → local `project_stage`) lives in
+  `supabase/functions/sync-odoo/index.ts` (constant `STAGE_MAP`). Adjust when
+  you rename a Kanban column in Odoo.
+- For Odoo 19 migration: the XML-RPC endpoints (`/xmlrpc/2/common`,
+  `/xmlrpc/2/object`) are stable across versions — only the field names on
+  `project.project` and `sale.order` might need a small map update.
 
 ## Brand tokens
 
