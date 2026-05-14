@@ -76,9 +76,9 @@ export function ProjectDetailPage() {
 
       <PageHeader
         icon={Building2}
-        eyebrow={`${project.event} · ${project.venue ?? '—'}`}
-        title={`${project.client} — ${project.code}`}
-        description={`${project.sqm} sqm · ${project.classification.toUpperCase()} · PM ${project.pm_initials ?? '—'}${project.creative_lead ? ` · Creative ${project.creative_lead}` : ''}`}
+        eyebrow={`${project.event} · ${project.venue ?? '-'}`}
+        title={`${project.client} · ${project.code}`}
+        description={`${project.sqm} sqm · ${project.classification.toUpperCase()} · PM ${project.pm_initials ?? '-'}${project.creative_lead ? ` · Creative ${project.creative_lead}` : ''}`}
         actions={
           <>
             <Button variant="ghost" asChild>
@@ -106,7 +106,7 @@ export function ProjectDetailPage() {
         <StatTile label="Precio objetivo" value={formatEUR(project.precio_objetivo)} icon={Layers} />
         <StatTile
           label="Margen target"
-          value={margin == null ? '—' : `${Math.round(margin * 100)}%`}
+          value={margin == null ? '-' : `${Math.round(margin * 100)}%`}
           hint={margin != null && margin < 0.35 ? 'Below 35% threshold' : 'On target'}
           delta={
             margin != null
@@ -159,7 +159,7 @@ export function ProjectDetailPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>RFQ — Comparativa</CardTitle>
+            <CardTitle>RFQ · Comparativa</CardTitle>
             <p className="text-2xs text-mute">Top 4 supplier quotes (Procurement Agent)</p>
           </CardHeader>
           <CardContent className="space-y-2">

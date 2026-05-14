@@ -58,7 +58,7 @@ const CATEGORIES = [
     label: 'Venues',
     icon: Building2,
     accent: 'magenta' as const,
-    description: 'Fira, Messe Berlin, NEC, IFEMA — regs and quirks.',
+    description: 'Fira, Messe Berlin, NEC, IFEMA · regs and quirks.',
   },
 ];
 
@@ -69,7 +69,7 @@ export function KnowledgePage() {
         icon={Library}
         eyebrow="Knowledge Base"
         title="Pro Expo intelligence, one click away."
-        description="Voice, suppliers, clients, margins, sustainability and venues — the body of knowledge every agent draws from."
+        description="Voice, suppliers, clients, margins, sustainability and venues · the body of knowledge every agent draws from."
       />
 
       <Input placeholder="Search across the whole knowledge base…" className="max-w-xl" />

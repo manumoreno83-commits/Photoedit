@@ -115,7 +115,7 @@ export function OverviewPage() {
                       className="ring-focus flex items-center gap-4 px-5 py-3 transition-colors hover:bg-bg-elev-2"
                     >
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border bg-bg-elev font-mono text-2xs font-semibold text-mute">
-                        {p.pm_initials ?? '—'}
+                        {p.pm_initials ?? '-'}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
@@ -159,7 +159,7 @@ export function OverviewPage() {
           <CardContent className="space-y-4">
             <DecisionRow
               tone="warning"
-              title="Pandrol — 416 sqm @ €400k"
+              title="Pandrol · 416 sqm @ €400k"
               body="Borderline classification (250k objetivo, strategic client). OD call required within 24h."
               eta="6h"
             />
@@ -171,7 +171,7 @@ export function OverviewPage() {
             />
             <DecisionRow
               tone="teal"
-              title="ZTE MWC — Gate 2 ready"
+              title="ZTE MWC · Gate 2 ready"
               body="22 of 22 items uploaded. Quality Gate Agent recommends GO; one-click email below."
               eta="now"
             />

@@ -6,10 +6,10 @@ import {
   Gauge,
   Library,
   PanelsTopLeft,
-  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useUI } from '@/store/ui';
+import { Logo } from '@/components/shared/Logo';
 
 interface NavItem {
   to: string;
@@ -29,7 +29,7 @@ const navItems: NavItem[] = [
     to: '/operations-center',
     label: 'Operations Center',
     icon: Bot,
-    description: '6 specialised agents',
+    description: '9 specialised agents',
   },
   {
     to: '/cockpit',
@@ -56,10 +56,8 @@ export function Sidebar() {
         sidebarCollapsed ? 'w-[68px]' : 'w-[248px]',
       )}
     >
-      <div className="flex h-14 items-center gap-2 border-b border-border px-4">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-gradient shadow-glow-magenta">
-          <Sparkles className="h-4 w-4 text-white" />
-        </div>
+      <div className="flex h-14 items-center gap-2.5 border-b border-border px-4">
+        <Logo size={32} />
         {!sidebarCollapsed && (
           <div className="min-w-0 flex-1">
             <p className="truncate font-display text-sm font-semibold leading-tight text-text">

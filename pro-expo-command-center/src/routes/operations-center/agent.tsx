@@ -151,7 +151,7 @@ export function AgentDetailPage() {
               >
                 {seedProjects.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.code} — {p.client}
+                    {p.code} · {p.client}
                   </option>
                 ))}
               </select>

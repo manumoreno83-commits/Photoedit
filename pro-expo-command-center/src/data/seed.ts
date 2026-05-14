@@ -1,5 +1,5 @@
 // Seed data drawn from real Pro Expo ops snapshots (Ops Manual v6, Comparativa
-// Carpinteros 2026, Capacity Dashboard). Used until Supabase is wired up — the
+// Carpinteros 2026, Capacity Dashboard). Used until Supabase is wired up · the
 // fields match src/types/db.ts so swapping to the live client is a single hook.
 
 import type { Project, Supplier, KnowledgeEntry } from '@/types/db';
@@ -229,7 +229,7 @@ export const seedSuppliers: Supplier[] = [
     max_concurrent: 4,
     active_projects: 2,
     rating: 3.7,
-    notes: 'Watch. ISE Focal incident — packaging/rigging failures.',
+    notes: 'Watch. ISE Focal incident · packaging/rigging failures.',
   },
   {
     id: 's-intea',
@@ -270,7 +270,7 @@ export const seedKnowledge: KnowledgeEntry[] = [
   {
     id: 'k-voice-1',
     category: 'voice',
-    title: 'Pro Expo voice — short form',
+    title: 'Pro Expo voice · short form',
     body: 'Direct, calm, decisive. We prefer evidence over adjectives. Sentences earn their length. No emojis in client comms.',
     tags: ['voice', 'comms'],
     updated_at: '2026-05-01T00:00:00Z',
@@ -310,7 +310,7 @@ export const seedKnowledge: KnowledgeEntry[] = [
   {
     id: 'k-venue-fira',
     category: 'venues',
-    title: 'Fira Gran Via — Barcelona',
+    title: 'Fira Gran Via · Barcelona',
     body: 'Floor load varies by hall. Rigging certification mandatory. ISE / MWC peak windows: Jan-Feb / Feb-Mar. Loading dock access hours strict.',
     tags: ['venue', 'fira', 'barcelona'],
     updated_at: '2026-03-01T00:00:00Z',

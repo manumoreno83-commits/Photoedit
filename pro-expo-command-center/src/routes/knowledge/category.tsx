@@ -99,7 +99,7 @@ export function KnowledgeCategoryPage() {
                       <td className="px-4 py-3 text-right font-mono">{s.max_concurrent}</td>
                       <td className="px-4 py-3 text-right font-mono">{s.active_projects}</td>
                       <td className="px-4 py-3 text-right font-mono">
-                        {s.rating?.toFixed(1) ?? '—'}
+                        {s.rating?.toFixed(1) ?? '-'}
                       </td>
                       <td className="px-4 py-3">
                         <Badge tone={status.tone}>{status.label}</Badge>

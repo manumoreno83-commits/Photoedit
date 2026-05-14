@@ -163,7 +163,7 @@ export function CockpitPage() {
                     <span className="text-mute">{formatDateShort(p.setup_start)}</span>
                   </Td>
                   <Td align="right">
-                    <span className="font-mono text-2xs text-mute">{p.pm_initials ?? '—'}</span>
+                    <span className="font-mono text-2xs text-mute">{p.pm_initials ?? '-'}</span>
                   </Td>
                   <Td align="right">
                     <Link
