@@ -10,21 +10,39 @@ import { cn } from '@/lib/cn';
 
 export function OperationsCenterPage() {
   const totalHours = AGENTS.reduce((s, a) => s + a.estimatedSavingHrYear, 0);
+  const sonnet = AGENTS.filter((a) => a.model === 'claude-sonnet-4-6').length;
+  const opus = AGENTS.filter((a) => a.model === 'claude-opus-4-7').length;
+  const live = AGENTS.filter((a) => a.status === 'live').length;
 
   return (
     <div className="space-y-6">
       <PageHeader
         icon={Bot}
         eyebrow="Operations Center"
-        title="Six agents, one Operations Director."
-        description="Each agent replaces a high-cost, high-stability process from the Ops Manual. Sonnet 4.6 handles the routine; Opus 4.7 runs the orchestrator."
+        title="Nine agents, one Operations Director."
+        description="Each agent replaces a high-cost, high-stability process. Sonnet 4.6 for routine, Opus 4.7 for the heavy reasoning."
       />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatTile label="Agents" value="6" icon={Bot} />
-        <StatTile label="Hrs/year reclaimed" value={`${totalHours.toLocaleString()}`} icon={Clock} hint="If all 6 hit target" />
-        <StatTile label="Sonnet 4.6 / Opus 4.7" value="5 · 1" icon={Cpu} hint="Cost-optimized routing" />
-        <StatTile label="Processes covered" value="5" icon={Layers} hint="From Ops Manual v6" />
+        <StatTile label="Agents" value={String(AGENTS.length)} icon={Bot} hint={`${live} live`} />
+        <StatTile
+          label="Hrs/year reclaimed"
+          value={totalHours.toLocaleString()}
+          icon={Clock}
+          hint="If all hit target"
+        />
+        <StatTile
+          label="Sonnet 4.6 / Opus 4.7"
+          value={`${sonnet} · ${opus}`}
+          icon={Cpu}
+          hint="Cost-optimized routing"
+        />
+        <StatTile
+          label="Knowledge docs"
+          value="5"
+          icon={Layers}
+          hint="Voice · Tiering · Margins · Sustain · Suppliers"
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
