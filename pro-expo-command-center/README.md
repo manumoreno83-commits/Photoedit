@@ -2,25 +2,30 @@
 
 Internal AI-powered Operations Center for Pro Expo. Consolidates the ops surfaces that today live across Google Drive, Odoo, Gmail and Slack into one app.
 
-## Three surfaces
+## Surfaces
 
-1. **Overview** — Today across every project and agent. Cards, decisions waiting, agent activity.
-2. **Operations Center** — Six specialised AI agents. Each replaces a high-cost, high-stability process documented in *Ops Manual v6*.
-3. **Operations Cockpit** — Live list of all active projects with detail views (gates, RFQs, margin).
-4. **Knowledge Base** — Voice, suppliers, clients, margins, sustainability, venues.
+1. **Overview** · Today across every project and agent. Decisions waiting, recent activity.
+2. **Operations Center** · Nine specialised AI agents in a 3 × 3 grid.
+3. **Operations Cockpit** · Live list of all active projects with detail views (gates, supplier quotes, margin).
+4. **Knowledge Base** · Voice, suppliers, clients, margins, sustainability, venues, tiering.
 
-## The six agents
+## The nine agents
 
-| Agent | Replaces | Model | Saves (h/yr) |
-|---|---|---|---|
-| Procurement | COMPARATIVA CARPINTEROS Excel | Sonnet 4.6 | ~400 |
-| Technical Brief | Day 1-2 manual brief authoring | Sonnet 4.6 | ~700 |
-| Quick Costing | Pre-Costing Matrix Excel | Sonnet 4.6 | ~500 |
-| Quality Gate | OD-led 43-item × 4-gate validation | Sonnet 4.6 | ~200 |
-| CE Reconciliation | `CE_EVENT_YEAR_Client.xlsx` fill-in | Sonnet 4.6 | ~300 |
-| Ops Orchestrator (meta) | Ad-hoc daily planning | **Opus 4.7** | ~250 |
+| # | Agent | Replaces | Model | Status |
+|---|---|---|---|---|
+| 1 | Client Communicator | Manual Gmail drafting | Sonnet 4.6 | live |
+| 2 | RFP Triage | Ad-hoc qualification | **Opus 4.7** | live |
+| 3 | RFP Brief Response | Manual proposal authoring | Sonnet 4.6 | live |
+| 4 | Procurement | COMPARATIVA CARPINTEROS Excel | Sonnet 4.6 | live |
+| 5 | Supplier Decision | Gut call across COMPARATIVA + WhatsApp | Sonnet 4.6 | live |
+| 6 | Project Plan Builder | Manual schedule + calendar invites | **Opus 4.7** | live |
+| 7 | Quick Costing | Pre-Costing Matrix Excel | Sonnet 4.6 | live |
+| 8 | Quality Gate | OD-led 43-item × 4-gate validation | Sonnet 4.6 | live |
+| 9 | Sustainability Audit | Ad-hoc sign-off | Sonnet 4.6 | live |
 
-Process selection follows the analysis in this branch: highest **operational cost × stability** → highest automation ROI (see Ops Manual v6 §3.2 Pre-Costing Matrix and §6.1-6.5 Quality Gates for the source of truth).
+Each agent loads its own slice of `knowledge_documents` (Voice, Tiering, Margin policy, Sustainability rubric, Suppliers) at runtime, so editing the doc in the database updates every agent without redeploying.
+
+All AI calls are logged in `agent_runs` with `tokens_in`, `tokens_out`, `cost_usd`, cache hits, status and the full input. See per-month spend with `select agent, sum(cost_usd) from agent_runs group by 1`.
 
 ## Tech stack
 
@@ -96,7 +101,7 @@ pnpm dev         # http://localhost:5173
 supabase login
 supabase link --project-ref <your-ref>
 
-# Push schema + seed (includes Odoo migration 0004)
+# Push schema + seed (migrations 0001-0006)
 supabase db push
 
 # Set secrets (NEVER expose any of these via VITE_)
@@ -106,15 +111,48 @@ supabase secrets set ODOO_DB=pro-expo
 supabase secrets set ODOO_LOGIN=ops@pro-expo.net
 supabase secrets set ODOO_API_KEY=...   # rotate any key that touched chat/email
 
-# Deploy the 6 agent functions + Odoo sync
-supabase functions deploy agent-procurement
-supabase functions deploy agent-technical-brief
-supabase functions deploy agent-quick-costing
-supabase functions deploy agent-quality-gate
-supabase functions deploy agent-ce-reconciliation
-supabase functions deploy agent-ops-orchestrator
-supabase functions deploy sync-odoo
+# Deploy the 9 agent functions + Odoo sync
+for fn in \
+  agent-client-communicator \
+  agent-rfp-triage \
+  agent-rfp-brief-response \
+  agent-procurement \
+  agent-supplier-decision \
+  agent-project-plan-builder \
+  agent-quick-costing \
+  agent-quality-gate \
+  agent-sustainability-audit \
+  sync-odoo
+do
+  supabase functions deploy "$fn"
+done
 ```
+
+## Auth (Google SSO, restricted to @pro-expo.net)
+
+Phase 1 uses Google SSO only. Reuses the same OAuth client we will need for Drive / Calendar / Gmail in Phase 5, so users grant scopes once.
+
+### Google Cloud Console
+
+1. `console.cloud.google.com` → create project `pro-expo-ops`.
+2. APIs & Services → Library → enable: **Google Drive API**, **Google Calendar API**, **Gmail API**.
+3. OAuth consent screen:
+   - User Type: **Internal** (Google Workspace).
+   - Authorized domain: `pro-expo.net`.
+   - Scopes: `openid`, `email`, `profile`, `drive.readonly`, `drive.file`, `calendar.events`, `gmail.compose`.
+4. Credentials → Create Credentials → OAuth Client ID → **Web application**.
+   - Authorized redirect URI: `https://<your-project>.supabase.co/auth/v1/callback`.
+5. Save the **Client ID** and **Client Secret**.
+
+### Supabase
+
+1. Authentication → Providers → **Google** → Enable.
+2. Paste Client ID + Client Secret. Add the scopes above.
+3. Authentication → URL Configuration → Site URL: your Vercel URL (or `http://localhost:5173` for dev).
+
+### Domain enforcement
+
+Migration `0005_phase1_alignment.sql` installs a trigger on `auth.users` that rejects any email not ending in `@pro-expo.net`. Belt and braces with the same check in the React `AuthProvider`.
 
 ## Odoo integration
 

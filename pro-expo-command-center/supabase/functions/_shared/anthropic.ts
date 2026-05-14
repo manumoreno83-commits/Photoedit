@@ -21,6 +21,32 @@ export const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 
 export type Model = 'claude-sonnet-4-6' | 'claude-opus-4-7';
 
+// USD per 1M tokens (Anthropic public pricing).
+// cacheRead = ~0.10x base. cacheWrite = ~1.25x base.
+const PRICING: Record<Model, { in: number; out: number; cacheRead: number; cacheWrite: number }> = {
+  'claude-sonnet-4-6': { in: 3, out: 15, cacheRead: 0.30, cacheWrite: 3.75 },
+  'claude-opus-4-7':   { in: 15, out: 75, cacheRead: 1.50, cacheWrite: 18.75 },
+};
+
+export function computeCostUsd(
+  model: Model,
+  inputTokens: number,
+  outputTokens: number,
+  cacheReadTokens: number,
+  cacheWriteTokens: number,
+): number {
+  const p = PRICING[model];
+  // Input billed minus what's already counted in cache reads.
+  const baseInput = Math.max(0, inputTokens - cacheReadTokens - cacheWriteTokens);
+  return (
+    (baseInput * p.in +
+      outputTokens * p.out +
+      cacheReadTokens * p.cacheRead +
+      cacheWriteTokens * p.cacheWrite) /
+    1_000_000
+  );
+}
+
 export interface AgentCallOpts {
   agent: string;
   projectId?: string | null;
@@ -38,6 +64,7 @@ export interface AgentResult {
   tokensOut: number;
   cacheReadTokens: number;
   cacheCreationTokens: number;
+  costUsd: number;
 }
 
 /**
@@ -90,18 +117,27 @@ export async function runAgent(opts: AgentCallOpts): Promise<AgentResult> {
     const cacheCreationTokens = (response.usage as { cache_creation_input_tokens?: number })
       .cache_creation_input_tokens ?? 0;
 
+    const costUsd = computeCostUsd(
+      opts.model,
+      tokensIn,
+      tokensOut,
+      cacheReadTokens,
+      cacheCreationTokens,
+    );
+
     await admin
       .from('agent_runs')
       .update({
         status: 'succeeded',
-        output: { text },
+        output: { text, cache_read_tokens: cacheReadTokens, cache_creation_tokens: cacheCreationTokens },
         tokens_in: tokensIn,
         tokens_out: tokensOut,
+        cost_usd: costUsd,
         finished_at: new Date().toISOString(),
       })
       .eq('id', run.id);
 
-    return { text, tokensIn, tokensOut, cacheReadTokens, cacheCreationTokens };
+    return { text, tokensIn, tokensOut, cacheReadTokens, cacheCreationTokens, costUsd };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     await admin

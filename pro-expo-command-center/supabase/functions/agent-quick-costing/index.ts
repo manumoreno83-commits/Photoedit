@@ -1,21 +1,34 @@
-// Quick Costing Agent — applies Pre-Costing Matrix + markups + reuse credit.
+// Quick Costing — applies the Pre-Costing Matrix and standard markups,
+// deducts reuse credit, and flags off-typology pricing.
 
 import { corsPreflight, jsonResponse, loadProject, runAgent } from '../_shared/anthropic.ts';
-import { OPS_CONTEXT_DIGEST } from '../_shared/ops-context.ts';
+import { loadKnowledge } from '../_shared/load-knowledge.ts';
 
-const SYSTEM = `${OPS_CONTEXT_DIGEST}
+const ROLE = `You are the Quick Costing agent for Pro Expo. You generate the
+pre-cost envelope during the 4-day kick-off window.
 
-ROLE: Quick Costing Agent.
-Goal: produce the pre-cost envelope during the 4-day kick-off window. Output:
-1) Typology pick (Standard Custom / Premium / Double Height / AV-Heavy / Modular)
-   with one sentence of rationale based on sqm + brief signals.
-2) A Markdown table: Element · Qty/sqm · Rate (€/sqm) · Subtotal · Markup % ·
-   Client Price. Use the standard markups (45/20/25/15/Design 50-80/Reused 60-80).
-3) Reuse credit row (deduct 40-60% of new-build cost for warehouse assets) — only
-   include if reusable elements are listed in the brief or it's a repeat client.
-4) Final totals: production cost EUR, client price EUR, EUR/sqm, target margin %.
-5) Sanity check vs Pre-Costing Matrix range — flag if > 15% above the typology
-   range with a single-line "Recommendation:".`;
+Output (Markdown):
+
+1. TYPOLOGY PICK — Standard Custom / Premium Custom / Double Height /
+   AV-Heavy / Modular / Hybrid, with one-sentence rationale based on sqm and
+   brief signals.
+
+2. QUICK COSTING TABLE — Markdown table matching this schema:
+   Element | Qty | Rate (EUR/sqm) | Subtotal | Markup % | Client Price
+   Apply standard markups: Construction 45 / AV 20 / Logistics 25 /
+   Venue 15 / Design 50-80 / Reused 60-80.
+
+3. REUSE CREDIT — only if reusable elements are listed or it is a repeat
+   client. Deduct 40 to 60% of new-build cost.
+
+4. TOTALS — Production cost EUR, Client price EUR, EUR/sqm, target margin %.
+
+5. SANITY CHECK — compare project EUR/sqm vs the Pre-Costing Matrix range.
+   Flag if more than 15% above.
+
+6. RECOMMENDATION — single line:  Recommendation: <within range / iterate / OD review>
+
+Voice rules: Pro Expo Voice. EUR only. No em dashes.`;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return corsPreflight();
@@ -25,8 +38,10 @@ Deno.serve(async (req) => {
     const { projectId, instructions } = await req.json();
     const project = projectId ? await loadProject(projectId) : null;
 
+    const knowledge = await loadKnowledge(['voice', 'margin_policy']);
+
     const user = [
-      project ? `PROJECT:\n${JSON.stringify(project, null, 2)}` : 'No project context provided.',
+      project ? `PROJECT:\n${JSON.stringify(project, null, 2)}` : '(no project context)',
       instructions ? `\nEXTRA INSTRUCTIONS:\n${instructions}` : '',
       '\nProduce the Quick Costing now.',
     ].join('\n');
@@ -35,7 +50,7 @@ Deno.serve(async (req) => {
       agent: 'agent-quick-costing',
       projectId: project?.id ?? null,
       model: 'claude-sonnet-4-6',
-      system: SYSTEM,
+      system: `${ROLE}\n\n# Pro Expo knowledge\n${knowledge}`,
       user,
       maxTokens: 1800,
       inputForAudit: { projectId, instructions },

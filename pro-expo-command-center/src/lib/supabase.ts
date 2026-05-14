@@ -25,12 +25,15 @@ export const supabase: SupabaseClient<Database> = createClient<Database>(
 
 export function invokeAgent<T = unknown>(
   agent:
+    | 'agent-client-communicator'
+    | 'agent-rfp-triage'
+    | 'agent-rfp-brief-response'
     | 'agent-procurement'
-    | 'agent-technical-brief'
+    | 'agent-supplier-decision'
+    | 'agent-project-plan-builder'
     | 'agent-quick-costing'
     | 'agent-quality-gate'
-    | 'agent-ce-reconciliation'
-    | 'agent-ops-orchestrator',
+    | 'agent-sustainability-audit',
   body: Record<string, unknown>,
 ) {
   return supabase.functions.invoke<T>(agent, { body });
